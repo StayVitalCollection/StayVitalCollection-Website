@@ -1,0 +1,701 @@
+import { useState, useEffect, useRef } from "react";
+import {
+  ArrowRight,
+  Clock,
+  FileText,
+  Sparkles,
+  CalendarCheck,
+  ShoppingBag,
+  Heart,
+  Shield,
+  ChevronRight,
+  ChevronLeft,
+  X,
+  Check,
+  Moon,
+  Sun,
+  Pill,
+  Users,
+  Download,
+  Star,
+} from "lucide-react";
+
+/* ─── Extra icons we need (shimmed where lucide doesn't have exact matches) ─── */
+const Brain = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a4 4 0 0 1 4 4v1a3 3 0 0 1 2 2.83V11a4 4 0 0 1-1.5 3.12A3.5 3.5 0 0 1 13 18h-2a3.5 3.5 0 0 1-3.5-3.88A4 4 0 0 1 6 11V9.83A3 3 0 0 1 8 7V6a4 4 0 0 1 4-4z"/><path d="M12 2v20"/></svg>
+);
+const Battery = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/><rect x="3" y="8" width="6" height="8" rx="1" fill={props.color||"currentColor"} opacity="0.3"/></svg>
+);
+const CloudRain = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8" y2="20"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="16" y1="16" x2="16" y2="20"/></svg>
+);
+const RefreshCw = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+);
+const Baby = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="8"/><circle cx="9.5" cy="10" r="0.75" fill={props.color||"currentColor"}/><circle cx="14.5" cy="10" r="0.75" fill={props.color||"currentColor"}/><path d="M9 14c.8 1 2 1.5 3 1.5s2.2-.5 3-1.5"/></svg>
+);
+const Layers = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></svg>
+);
+const User = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+);
+const Thermometer = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/></svg>
+);
+const HelpCircle = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+);
+const Leaf = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/></svg>
+);
+const BedDouble = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><line x1="12" y1="4" x2="12" y2="10"/><line x1="2" y1="17" x2="22" y2="17"/></svg>
+);
+const HandHelping = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="M7 20l1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-3.15 2.3"/></svg>
+);
+const DollarSign = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+);
+const Gem = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><polygon points="6 3 18 3 22 9 12 22 2 9"/><line x1="12" y1="22" x2="2" y2="9"/><line x1="12" y1="22" x2="22" y2="9"/><path d="M2 9h20"/><line x1="12" y1="3" x2="12" y2="9"/></svg>
+);
+const Crown = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M2 18l3-12 5 5 2-7 2 7 5-5 3 12z"/><line x1="2" y1="18" x2="22" y2="18"/></svg>
+);
+const Bath = (props) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={props.size||24} height={props.size||24} viewBox="0 0 24 24" fill="none" stroke={props.color||"currentColor"} strokeWidth={props.strokeWidth||2} strokeLinecap="round" strokeLinejoin="round"><path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z"/><path d="M6 12V5a2 2 0 0 1 2-2h1"/><line x1="7" y1="20" x2="7" y2="22"/><line x1="17" y1="20" x2="17" y2="22"/></svg>
+);
+
+/* ─── Google Fonts ─── */
+if (!document.querySelector('link[href*="Playfair"]')) {
+  const fl = document.createElement("link");
+  fl.href = "https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Jost:wght@300;400;500;600&display=swap";
+  fl.rel = "stylesheet";
+  document.head.appendChild(fl);
+}
+
+/* ─── Colors ─── */
+const C = {
+  ink: "#1A1A1A",
+  inkDeep: "#0D1B2A",
+  gold: "#C89B3C",
+  cream: "#F5F2EB",
+  creamLight: "#FDF8F0",
+  sage: "#7C8C6E",
+  teal: "#1A5C5E",
+  warmWhite: "#FFFDF9",
+  goldLight: "rgba(200,155,60,0.12)",
+  goldMid: "rgba(200,155,60,0.25)",
+  inkLight: "rgba(26,26,26,0.06)",
+  inkMid: "rgba(26,26,26,0.5)",
+};
+
+/* ─── Logo Components ─── */
+function LogoNav() {
+  return (
+    <div className="flex items-center gap-2">
+      <svg width="30" height="30" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(40,35)">
+          <path d="M20 0 L40 40 L0 40 Z" fill={C.gold} />
+          <path d="M20 10 L28 28 L12 28 Z" fill={C.cream} />
+          <circle cx="20" cy="-6" r="3" fill={C.gold} />
+        </g>
+      </svg>
+      <div className="flex flex-col leading-none">
+        <span style={{ fontFamily: "'Playfair Display', Didot, serif", fontWeight: 600, fontSize: 15, letterSpacing: 2, color: C.ink }}>
+          STAYVITAL
+        </span>
+        <span style={{ fontFamily: "'Playfair Display', Didot, serif", fontSize: 8, letterSpacing: 5, color: C.gold, marginTop: 2 }}>
+          COLLECTION
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function LogoHero() {
+  return (
+    <svg width="52" height="52" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+      <g transform="translate(40,35)">
+        <path d="M20 0 L40 40 L0 40 Z" fill={C.gold} />
+        <path d="M20 10 L28 28 L12 28 Z" fill={C.cream} />
+        <circle cx="20" cy="-6" r="3" fill={C.gold} />
+      </g>
+    </svg>
+  );
+}
+
+function LogoFooter() {
+  return (
+    <div className="flex items-center gap-2">
+      <svg width="26" height="26" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+        <g transform="translate(40,35)">
+          <path d="M20 0 L40 40 L0 40 Z" fill={C.gold} />
+          <path d="M20 10 L28 28 L12 28 Z" fill={C.inkDeep} />
+          <circle cx="20" cy="-6" r="3" fill={C.gold} />
+        </g>
+      </svg>
+      <div className="flex flex-col leading-none">
+        <span style={{ fontFamily: "'Playfair Display', Didot, serif", fontWeight: 600, fontSize: 13, letterSpacing: 2, color: C.creamLight }}>
+          STAYVITAL
+        </span>
+        <span style={{ fontFamily: "'Playfair Display', Didot, serif", fontSize: 7, letterSpacing: 4, color: C.gold, marginTop: 2 }}>
+          COLLECTION
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Intersection Observer Hook ─── */
+function useInView() {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { setVisible(true); obs.unobserve(el); } },
+      { threshold: 0.12 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+  return [ref, visible];
+}
+
+function Reveal({ children, delay = 0, className = "" }) {
+  const [ref, visible] = useInView();
+  return (
+    <div
+      ref={ref}
+      className={className}
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? "translateY(0)" : "translateY(28px)",
+        transition: `opacity 0.8s cubic-bezier(.16,1,.3,1) ${delay}s, transform 0.8s cubic-bezier(.16,1,.3,1) ${delay}s`,
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+/* ─── Quiz Data ─── */
+const quizSteps = [
+  {
+    label: "The Immediate Fire",
+    question: "If you could wave a magic wand and get one thing back today, what would give you the most immediate relief?",
+    options: [
+      { label: "Mental Bandwidth", sub: "Logistics & decision fatigue", icon: Brain },
+      { label: "Physical Energy", sub: "Sleep & daily stamina", icon: Battery },
+      { label: "Emotional Clarity", sub: "Overwhelm & emotional flooding", icon: CloudRain },
+      { label: "A Complete Reset", sub: "All of the above", icon: RefreshCw },
+    ],
+  },
+  {
+    label: "The Sandwich Context",
+    question: "Who are you currently managing life for, besides yourself?",
+    options: [
+      { label: "An aging parent or relative", sub: null, icon: Heart },
+      { label: "A partner or spouse with complex needs", sub: null, icon: Users },
+      { label: "Children or teenagers", sub: null, icon: Baby },
+      { label: "Multiple generations", sub: "The full Sandwich", icon: Layers },
+      { label: "Just managing my own health right now", sub: null, icon: User },
+    ],
+  },
+  {
+    label: "The Biological Reality",
+    question: "Where are you physically on the hormonal timeline?",
+    options: [
+      { label: "40+ and feeling the shifts", sub: "Poor sleep, brain fog, perimenopause", icon: Moon },
+      { label: "Post-menopause", sub: null, icon: Sun },
+      { label: "Already on HRT, but not fully optimized", sub: null, icon: Thermometer },
+      { label: "Under 40 / Not sure", sub: null, icon: HelpCircle },
+    ],
+  },
+  {
+    label: "The Frustration Check",
+    question: "What is the most frustrating advice you keep hearing?",
+    options: [
+      { label: '"Just take a bath and do some yoga."', sub: "Needs real infrastructure, not platitudes", icon: Bath },
+      { label: '"Take this generic drugstore supplement."', sub: "Needs targeted, high-quality products", icon: Leaf },
+      { label: '"You just need to sleep."', sub: "Needs clinical support & specialists", icon: BedDouble },
+      { label: '"Just hire some help."', sub: "Needs vetted, affordable resources", icon: HandHelping },
+    ],
+  },
+  {
+    label: "The Action Tier",
+    question: "If I could hand you a vetted, customized support protocol right now, what is your realistic monthly budget?",
+    options: [
+      { label: "Under $50", sub: "High-impact stacks & DIY tools", icon: DollarSign },
+      { label: "$50 – $150", sub: "Premium wellness & memberships", icon: Gem },
+      { label: "$150+", sub: "Specialist booking & telehealth", icon: Crown },
+    ],
+  },
+];
+
+const resultData = {
+  0: { title: "Your Essentials Protocol", desc: "A high-impact, budget-friendly stack of vetted supplements and DIY wellness tools — curated for maximum relief under $50/month.", cta1: "View My Supplement Stack", cta2: "Download My Protocol PDF", Icon: Leaf },
+  1: { title: "Your Premium Protocol", desc: "Targeted premium wellness products, monthly membership access, and guided protocols — designed for the $50–$150 action tier.", cta1: "View My Curated Cart", cta2: "Explore Membership", Icon: Gem },
+  2: { title: "Your Specialist Protocol", desc: "Direct booking with vetted telehealth providers, HRT specialists, and white-labeled care services — for women ready to invest in full-spectrum support.", cta1: "Book a Specialist This Week", cta2: "View My Full Protocol", Icon: Crown },
+};
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN
+   ═══════════════════════════════════════════════════════════════ */
+export default function StayVitalLanding() {
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [quizStep, setQuizStep] = useState(0);
+  const [answers, setAnswers] = useState([]);
+  const [quizDone, setQuizDone] = useState(false);
+  const [emailInput, setEmailInput] = useState("");
+  const [emailSubmitted, setEmailSubmitted] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+
+  useEffect(() => {
+    const fn = () => setScrollY(window.scrollY);
+    window.addEventListener("scroll", fn, { passive: true });
+    return () => window.removeEventListener("scroll", fn);
+  }, []);
+
+  useEffect(() => {
+    document.body.style.overflow = quizOpen ? "hidden" : "";
+    return () => { document.body.style.overflow = ""; };
+  }, [quizOpen]);
+
+  const selectAnswer = (idx) => {
+    const next = [...answers];
+    next[quizStep] = idx;
+    setAnswers(next);
+    if (quizStep < quizSteps.length - 1) {
+      setTimeout(() => setQuizStep(quizStep + 1), 380);
+    } else {
+      setTimeout(() => setQuizDone(true), 380);
+    }
+  };
+
+  const resetQuiz = () => { setQuizStep(0); setAnswers([]); setQuizDone(false); setQuizOpen(false); };
+
+  const serif = "'Playfair Display', Didot, Georgia, serif";
+  const sans = "'Jost', 'Helvetica Neue', sans-serif";
+  const pad = "px-6 md:px-12 lg:px-24 xl:px-32";
+
+  const result = quizDone ? resultData[answers[4] ?? 0] : null;
+
+  return (
+    <div style={{ fontFamily: sans, backgroundColor: C.cream, color: C.ink, minHeight: "100vh" }}>
+
+      {/* ═══ NAV ═══ */}
+      <nav
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-5 md:px-10 lg:px-20"
+        style={{
+          height: 72,
+          backgroundColor: scrollY > 50 ? "rgba(245,242,235,0.92)" : "transparent",
+          backdropFilter: scrollY > 50 ? "blur(16px)" : "none",
+          borderBottom: scrollY > 50 ? `1px solid ${C.inkLight}` : "1px solid transparent",
+          transition: "all 0.4s ease",
+        }}
+      >
+        <LogoNav />
+        <button
+          onClick={() => setQuizOpen(true)}
+          className="hidden sm:flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-medium"
+          style={{ backgroundColor: C.ink, color: C.cream, letterSpacing: 0.5, transition: "all 0.3s" }}
+          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.ink; }}
+        >
+          Start Your Protocol <ArrowRight size={14} />
+        </button>
+      </nav>
+
+      {/* ═══ HERO ═══ */}
+      <section
+        className={`relative flex flex-col items-center justify-center text-center ${pad} pt-32 pb-20 md:pt-44 md:pb-32`}
+        style={{ background: `linear-gradient(180deg, ${C.cream} 0%, ${C.creamLight} 40%, rgba(200,155,60,0.04) 100%)`, minHeight: "100vh", overflow: "hidden" }}
+      >
+        <div className="absolute pointer-events-none" style={{ width: 800, height: 800, borderRadius: "50%", border: `1px solid ${C.goldMid}`, top: "-30%", left: "50%", transform: `translateX(-50%) translateY(${scrollY * 0.08}px)`, opacity: 0.3 }} />
+        <div className="absolute pointer-events-none" style={{ width: 500, height: 500, borderRadius: "50%", border: `1px solid ${C.goldLight}`, bottom: "-10%", right: "-5%", opacity: 0.2 }} />
+
+        <Reveal>
+          <div className="mb-8"><LogoHero /></div>
+        </Reveal>
+        <Reveal delay={0.08}>
+          <p className="tracking-widest uppercase text-xs md:text-sm mb-6" style={{ color: C.gold, fontWeight: 500, letterSpacing: 4 }}>The Vitality Concierge</p>
+        </Reveal>
+        <Reveal delay={0.15}>
+          <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl max-w-4xl" style={{ fontFamily: serif, fontWeight: 400, lineHeight: 1.1 }}>
+            Every Family.<br />Every Generation.<br />
+            <span style={{ color: C.gold, fontStyle: "italic" }}>One Vital Path.</span>
+          </h1>
+        </Reveal>
+        <Reveal delay={0.3}>
+          <p className="mt-8 text-base md:text-lg max-w-xl leading-relaxed" style={{ color: C.inkMid, fontWeight: 300 }}>
+            The first AI-powered care concierge for women balancing career, longevity, and the sandwich generation. Vetted products. Real protocols. Answers in 90 seconds.
+          </p>
+        </Reveal>
+        <Reveal delay={0.42}>
+          <button
+            onClick={() => setQuizOpen(true)}
+            className="mt-10 flex items-center gap-3 px-8 py-4 rounded-full text-base font-medium group"
+            style={{ backgroundColor: C.gold, color: C.cream, letterSpacing: 0.5, transition: "all 0.4s cubic-bezier(.16,1,.3,1)", boxShadow: "0 4px 24px rgba(200,155,60,0.25)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(200,155,60,0.35)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 24px rgba(200,155,60,0.25)"; }}
+          >
+            Start Your Protocol <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+          </button>
+        </Reveal>
+        <Reveal delay={0.52}>
+          <p className="mt-5 text-xs" style={{ color: C.inkMid, fontWeight: 300 }}>5 questions · 90 seconds · Completely free</p>
+        </Reveal>
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2" style={{ opacity: scrollY > 100 ? 0 : 0.4, transition: "opacity 0.4s" }}>
+          <div className="w-5 h-8 rounded-full border-2 flex justify-center pt-1.5" style={{ borderColor: C.inkMid }}>
+            <div className="w-1 h-2 rounded-full" style={{ backgroundColor: C.inkMid, animation: "scrollPulse 2s ease-in-out infinite" }} />
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ THE PROBLEM ═══ */}
+      <section className={`${pad} py-20 md:py-32`}>
+        <div className="max-w-3xl mx-auto text-center">
+          <Reveal><p className="text-xs tracking-widest uppercase mb-4" style={{ color: C.gold, letterSpacing: 4 }}>You know this feeling</p></Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-2xl sm:text-3xl md:text-4xl leading-snug" style={{ fontFamily: serif, fontWeight: 400, lineHeight: 1.25 }}>
+              It's 11 PM. You're researching "best magnesium for sleep" while your mother's medication schedule is open in another tab.
+              <span style={{ color: C.gold, fontStyle: "italic" }}> You don't need more information. You need someone who already did the research.</span>
+            </h2>
+          </Reveal>
+          <Reveal delay={0.25}><div className="w-16 h-px mx-auto mt-10" style={{ backgroundColor: C.gold }} /></Reveal>
+        </div>
+      </section>
+
+      {/* ═══ HOW IT WORKS ═══ */}
+      <section className={`${pad} py-20 md:py-32`} style={{ backgroundColor: C.inkDeep }}>
+        <div className="max-w-5xl mx-auto">
+          <Reveal><p className="text-xs tracking-widest uppercase mb-4 text-center" style={{ color: C.gold, letterSpacing: 4 }}>Your path to results</p></Reveal>
+          <Reveal delay={0.1}>
+            <h2 className="text-3xl md:text-4xl lg:text-5xl text-center mb-16 md:mb-24" style={{ fontFamily: serif, fontWeight: 400, color: C.cream }}>
+              From overwhelmed to answered<span style={{ color: C.gold }}> in 90 seconds.</span>
+            </h2>
+          </Reveal>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-4 lg:gap-8">
+            {[
+              { step: "01", icon: Clock, title: "90-Second Triage", desc: "Five targeted questions identify your exact struggle — energy, hormones, caregiver stress, budget — and route you to your personalized path." },
+              { step: "02", icon: FileText, title: "Instant Custom Protocol", desc: "Your personalized Vitality Protocol is generated immediately — specific products, dosages, and timing, not generic advice." },
+              { step: "03", icon: ShoppingBag, title: "Buy or Book. Tonight.", desc: "Pre-loaded supplement carts ship tomorrow. Vetted specialist bookings open this week. Action, not information." },
+            ].map((item, i) => (
+              <Reveal key={i} delay={i * 0.15}>
+                <div
+                  className="relative p-8 md:p-10 rounded-2xl h-full flex flex-col"
+                  style={{ backgroundColor: "rgba(253,248,240,0.04)", border: "1px solid rgba(200,155,60,0.15)", transition: "all 0.4s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "rgba(200,155,60,0.08)"; e.currentTarget.style.borderColor = "rgba(200,155,60,0.3)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "rgba(253,248,240,0.04)"; e.currentTarget.style.borderColor = "rgba(200,155,60,0.15)"; }}
+                >
+                  <span className="text-xs tracking-widest mb-6 block" style={{ color: C.gold, letterSpacing: 3 }}>STEP {item.step}</span>
+                  <item.icon size={28} color={C.gold} strokeWidth={1.5} className="mb-5" />
+                  <h3 className="text-xl md:text-2xl mb-4" style={{ fontFamily: serif, fontWeight: 500, color: C.cream }}>{item.title}</h3>
+                  <p className="text-sm leading-relaxed flex-1" style={{ color: "rgba(253,248,240,0.6)", fontWeight: 300 }}>{item.desc}</p>
+                  {i < 2 && <div className="hidden md:flex absolute -right-6 top-1/2 -translate-y-1/2 z-10"><ChevronRight size={20} color={C.gold} style={{ opacity: 0.4 }} /></div>}
+                </div>
+              </Reveal>
+            ))}
+          </div>
+          <Reveal delay={0.5}>
+            <div className="text-center mt-14">
+              <button
+                onClick={() => setQuizOpen(true)}
+                className="inline-flex items-center gap-3 px-8 py-4 rounded-full font-medium text-base group"
+                style={{ backgroundColor: C.gold, color: C.inkDeep, letterSpacing: 0.5, transition: "all 0.3s", boxShadow: "0 4px 20px rgba(200,155,60,0.3)" }}
+                onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 8px 32px rgba(200,155,60,0.4)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 20px rgba(200,155,60,0.3)"; }}
+              >
+                Start Your Protocol Now <ArrowRight size={18} className="transition-transform group-hover:translate-x-1" />
+              </button>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══ FOUR PILLARS ═══ */}
+      <section className={`${pad} py-20 md:py-32`}>
+        <div className="max-w-6xl mx-auto">
+          <Reveal><p className="text-xs tracking-widest uppercase mb-4 text-center" style={{ color: C.gold, letterSpacing: 4 }}>What we cover</p></Reveal>
+          <Reveal delay={0.1}><h2 className="text-3xl md:text-4xl text-center mb-16" style={{ fontFamily: serif, fontWeight: 400 }}>Protocols for every layer of your life.</h2></Reveal>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            {[
+              { icon: Pill, title: "The Protocol", desc: "Vetted supplement stacks, sleep routines, and recovery protocols — specific to your stage and symptoms.", accent: C.gold },
+              { icon: Heart, title: "The Invisible Caregiver", desc: "Resources, respite strategies, and the permission to put yourself on your own care list.", accent: C.sage },
+              { icon: Sparkles, title: "The Glow-Up", desc: "K-Beauty routines, skin barrier repair, and the science of looking as vital as you feel.", accent: C.teal },
+              { icon: Shield, title: "The System", desc: "Medication trackers, morning routines, and the operational architecture of a managed life.", accent: C.ink },
+            ].map((p, i) => (
+              <Reveal key={i} delay={i * 0.1}>
+                <div
+                  className="p-7 rounded-xl h-full"
+                  style={{ backgroundColor: C.creamLight, border: `1px solid ${C.inkLight}`, transition: "all 0.35s ease" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = p.accent; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 24px rgba(13,27,42,0.06)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = C.inkLight; e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "none"; }}
+                >
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center mb-5" style={{ backgroundColor: `${p.accent}15` }}>
+                    <p.icon size={20} color={p.accent} strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-lg mb-3" style={{ fontFamily: serif, fontWeight: 600 }}>{p.title}</h3>
+                  <p className="text-sm leading-relaxed" style={{ color: C.inkMid, fontWeight: 300 }}>{p.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ PULL QUOTE ═══ */}
+      <section className={`${pad} py-20 md:py-28`} style={{ background: `linear-gradient(135deg, rgba(200,155,60,0.06) 0%, ${C.cream} 50%, rgba(124,140,110,0.06) 100%)` }}>
+        <div className="max-w-3xl mx-auto text-center">
+          <Reveal>
+            <svg width="36" height="28" viewBox="0 0 36 28" fill="none" className="mx-auto mb-8">
+              <path d="M0 28V16.8C0 5.6 6.4 0 16 0v5.6C11.2 5.6 8.4 8.4 8 12h6v16H0zm20 0V16.8C20 5.6 26.4 0 36 0v5.6c-4.8 0-7.6 2.8-8 7.2h6v16H20z" fill={C.goldMid} />
+            </svg>
+          </Reveal>
+          <Reveal delay={0.1}>
+            <blockquote className="text-xl md:text-2xl lg:text-3xl leading-relaxed" style={{ fontFamily: serif, fontWeight: 400, fontStyle: "italic" }}>
+              Nobody tells you that caregiving means grieving someone who's still alive. We built this for every woman holding it all together at midnight.
+            </blockquote>
+          </Reveal>
+          <Reveal delay={0.2}>
+            <div className="w-12 h-px mx-auto mt-8 mb-5" style={{ backgroundColor: C.gold }} />
+            <p className="text-xs tracking-widest uppercase" style={{ color: C.gold, letterSpacing: 3 }}>The StayVital Collection Ethos</p>
+          </Reveal>
+        </div>
+      </section>
+
+      {/* ═══ LEAD MAGNET ═══ */}
+      <section className={`${pad} py-20 md:py-32`} style={{ backgroundColor: C.creamLight }}>
+        <div className="max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 md:gap-16 items-center">
+            <Reveal>
+              <div className="relative rounded-2xl overflow-hidden aspect-[4/5] flex items-end p-8" style={{ background: `linear-gradient(160deg, ${C.inkDeep} 0%, ${C.teal} 100%)` }}>
+                <div className="absolute top-8 right-8 w-20 h-20 rounded-full" style={{ border: "1px solid rgba(200,155,60,0.3)" }} />
+                <div className="absolute top-20 right-12 w-32 h-32 rounded-full" style={{ border: "1px solid rgba(200,155,60,0.15)" }} />
+                <div className="absolute top-10 left-8">
+                  <svg width="44" height="44" viewBox="0 0 120 120"><g transform="translate(40,35)"><path d="M20 0 L40 40 L0 40 Z" fill={C.gold} /><path d="M20 10 L28 28 L12 28 Z" fill={C.inkDeep} /><circle cx="20" cy="-6" r="3" fill={C.gold} /></g></svg>
+                </div>
+                <div className="relative z-10">
+                  <FileText size={32} color={C.gold} strokeWidth={1} className="mb-4" />
+                  <p className="text-3xl md:text-4xl mb-2" style={{ fontFamily: serif, fontWeight: 400, color: C.creamLight }}>VitalPath</p>
+                  <p className="text-lg" style={{ fontFamily: serif, fontStyle: "italic", color: C.gold }}>Starter Kit</p>
+                  <p className="text-sm mt-3" style={{ color: "rgba(253,248,240,0.5)" }}>19 pages · Free download</p>
+                </div>
+              </div>
+            </Reveal>
+            <div>
+              <Reveal><p className="text-xs tracking-widest uppercase mb-4" style={{ color: C.gold, letterSpacing: 4 }}>Free Resource</p></Reveal>
+              <Reveal delay={0.1}><h2 className="text-2xl md:text-3xl lg:text-4xl mb-6" style={{ fontFamily: serif, fontWeight: 400, lineHeight: 1.2 }}>The VitalPath Starter Kit</h2></Reveal>
+              <Reveal delay={0.2}>
+                <p className="text-base leading-relaxed mb-8" style={{ color: C.inkMid, fontWeight: 300 }}>
+                  Your 19-page protocol guide covering the three pillars every sandwich-generation woman needs to stabilize first: sleep architecture, hormonal balance, and caregiver resilience. No fluff. Just the exact steps.
+                </p>
+              </Reveal>
+              <Reveal delay={0.25}>
+                <ul className="space-y-3 mb-10">
+                  {["The 3-Part Sleep Stack for Perimenopausal Women","Caregiver Burnout: The 5 Warning Signs & Interventions","Your First 7-Day Supplement Protocol","When to See a Specialist — Decision Tree Included"].map((item, i) => (
+                    <li key={i} className="flex items-start gap-3 text-sm">
+                      <Check size={16} color={C.gold} className="mt-0.5 flex-shrink-0" />
+                      <span style={{ fontWeight: 300 }}>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </Reveal>
+              <Reveal delay={0.35}>
+                {!emailSubmitted ? (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <input type="email" value={emailInput} onChange={(e) => setEmailInput(e.target.value)} placeholder="Your email address"
+                      className="flex-1 px-5 py-3.5 rounded-full text-sm outline-none"
+                      style={{ backgroundColor: C.cream, border: `1px solid ${C.inkLight}`, fontFamily: sans, color: C.ink }}
+                      onFocus={(e) => { e.target.style.borderColor = C.gold; }}
+                      onBlur={(e) => { e.target.style.borderColor = C.inkLight; }}
+                    />
+                    <button
+                      onClick={() => emailInput && setEmailSubmitted(true)}
+                      className="flex items-center justify-center gap-2 px-6 py-3.5 rounded-full text-sm font-medium whitespace-nowrap"
+                      style={{ backgroundColor: C.ink, color: C.cream, transition: "all 0.3s" }}
+                      onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.ink; }}
+                    >
+                      <Download size={16} /> Get the Kit
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-3 px-6 py-4 rounded-full" style={{ backgroundColor: "rgba(124,140,110,0.1)" }}>
+                    <Check size={18} color={C.sage} />
+                    <span className="text-sm" style={{ color: C.sage, fontWeight: 500 }}>Check your inbox — your Starter Kit is on the way.</span>
+                  </div>
+                )}
+              </Reveal>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ═══ FINAL CTA ═══ */}
+      <section className={`${pad} py-24 md:py-36 text-center`} style={{ background: `linear-gradient(180deg, ${C.cream} 0%, rgba(200,155,60,0.08) 100%)` }}>
+        <Reveal><p className="text-xs tracking-widest uppercase mb-6" style={{ color: C.gold, letterSpacing: 4 }}>Your protocol is waiting</p></Reveal>
+        <Reveal delay={0.1}>
+          <h2 className="text-3xl md:text-4xl lg:text-5xl max-w-3xl mx-auto mb-6" style={{ fontFamily: serif, fontWeight: 400, lineHeight: 1.15 }}>
+            Stop researching at midnight.<br /><span style={{ color: C.gold, fontStyle: "italic" }}>Start with your protocol.</span>
+          </h2>
+        </Reveal>
+        <Reveal delay={0.2}>
+          <p className="text-base max-w-lg mx-auto mb-10" style={{ color: C.inkMid, fontWeight: 300 }}>
+            Five questions. Ninety seconds. A personalized plan built for your stage of life, your symptoms, and your caregiving reality.
+          </p>
+        </Reveal>
+        <Reveal delay={0.3}>
+          <button
+            onClick={() => setQuizOpen(true)}
+            className="inline-flex items-center gap-3 px-10 py-5 rounded-full text-lg font-medium group"
+            style={{ backgroundColor: C.gold, color: C.cream, letterSpacing: 0.5, boxShadow: "0 6px 32px rgba(200,155,60,0.3)", transition: "all 0.4s cubic-bezier(.16,1,.3,1)" }}
+            onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-3px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(200,155,60,0.4)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 6px 32px rgba(200,155,60,0.3)"; }}
+          >
+            Start Your Protocol <ArrowRight size={20} className="transition-transform group-hover:translate-x-1" />
+          </button>
+        </Reveal>
+      </section>
+
+      {/* ═══ FOOTER ═══ */}
+      <footer className={`${pad} py-14`} style={{ backgroundColor: C.inkDeep, borderTop: "1px solid rgba(200,155,60,0.15)" }}>
+        <div className="max-w-6xl mx-auto">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-8 mb-10">
+            <LogoFooter />
+            <div className="flex flex-wrap gap-8">
+              {["Protocols", "About", "Privacy", "Terms"].map((link) => (
+                <a key={link} href="#" className="text-xs tracking-widest uppercase"
+                  style={{ color: "rgba(253,248,240,0.4)", letterSpacing: 2, transition: "color 0.3s" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = C.gold; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = "rgba(253,248,240,0.4)"; }}
+                >{link}</a>
+              ))}
+            </div>
+          </div>
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: "1px solid rgba(253,248,240,0.06)" }}>
+            <p className="text-xs" style={{ color: "rgba(253,248,240,0.25)" }}>© 2026 StayVital Collection LLC. All rights reserved.</p>
+            <p className="text-xs" style={{ color: "rgba(253,248,240,0.25)", fontStyle: "italic" }}>Every family. Every generation. One Vital path.</p>
+          </div>
+        </div>
+      </footer>
+
+      {/* ═══ QUIZ MODAL ═══ */}
+      {quizOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{ backgroundColor: "rgba(13,27,42,0.88)", backdropFilter: "blur(10px)" }}
+          onClick={(e) => { if (e.target === e.currentTarget) resetQuiz(); }}
+        >
+          <div
+            className="relative w-full max-w-lg max-h-[92vh] overflow-y-auto rounded-2xl"
+            style={{ backgroundColor: C.cream, boxShadow: "0 24px 64px rgba(0,0,0,0.3)", animation: "modalIn 0.4s cubic-bezier(.16,1,.3,1)" }}
+          >
+            <button
+              onClick={resetQuiz}
+              className="absolute top-5 right-5 z-10 w-8 h-8 rounded-full flex items-center justify-center"
+              style={{ backgroundColor: C.inkLight, transition: "background 0.2s" }}
+              onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.goldLight; }}
+              onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.inkLight; }}
+            >
+              <X size={16} color={C.ink} />
+            </button>
+
+            {!quizDone ? (
+              <div className="p-7 md:p-10">
+                <div className="flex gap-1.5 mb-6">
+                  {quizSteps.map((_, i) => (
+                    <div key={i} className="h-1 flex-1 rounded-full transition-all duration-500" style={{ backgroundColor: i <= quizStep ? C.gold : C.inkLight }} />
+                  ))}
+                </div>
+                <p className="text-xs tracking-widest uppercase mb-1" style={{ color: C.gold, letterSpacing: 3 }}>{quizSteps[quizStep].label}</p>
+                <p className="text-xs mb-5" style={{ color: C.inkMid }}>Question {quizStep + 1} of {quizSteps.length}</p>
+                <h3 className="text-lg md:text-xl mb-7" style={{ fontFamily: serif, fontWeight: 500, lineHeight: 1.35 }} key={quizStep}>
+                  {quizSteps[quizStep].question}
+                </h3>
+                <div className="space-y-2.5" key={`o-${quizStep}`}>
+                  {quizSteps[quizStep].options.map((opt, i) => {
+                    const Icon = opt.icon;
+                    const sel = answers[quizStep] === i;
+                    return (
+                      <button
+                        key={i}
+                        onClick={() => selectAnswer(i)}
+                        className="w-full flex items-center gap-3.5 p-3.5 rounded-xl text-left transition-all duration-300"
+                        style={{ backgroundColor: sel ? C.goldLight : "transparent", border: `1px solid ${sel ? C.gold : C.inkLight}` }}
+                        onMouseEnter={(e) => { if (!sel) { e.currentTarget.style.borderColor = C.goldMid; e.currentTarget.style.backgroundColor = "rgba(200,155,60,0.04)"; } }}
+                        onMouseLeave={(e) => { if (!sel) { e.currentTarget.style.borderColor = C.inkLight; e.currentTarget.style.backgroundColor = "transparent"; } }}
+                      >
+                        <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: sel ? `${C.gold}25` : C.inkLight }}>
+                          <Icon size={16} color={sel ? C.gold : C.inkMid} strokeWidth={1.5} />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <span className="text-sm font-medium block" style={{ color: C.ink }}>{opt.label}</span>
+                          {opt.sub && <span className="text-xs block mt-0.5" style={{ color: C.inkMid, fontWeight: 300 }}>{opt.sub}</span>}
+                        </div>
+                        {sel && <Check size={16} color={C.gold} className="flex-shrink-0" />}
+                      </button>
+                    );
+                  })}
+                </div>
+                {quizStep > 0 && (
+                  <button onClick={() => setQuizStep(quizStep - 1)} className="flex items-center gap-1 mt-6 text-xs" style={{ color: C.inkMid }}>
+                    <ChevronLeft size={14} /> Back
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="p-7 md:p-10 text-center">
+                {result && (() => {
+                  const RIcon = result.Icon;
+                  return (
+                    <>
+                      <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: C.goldLight }}>
+                        <RIcon size={28} color={C.gold} />
+                      </div>
+                      <h3 className="text-2xl md:text-3xl mb-3" style={{ fontFamily: serif, fontWeight: 500 }}>{result.title}</h3>
+                      <p className="text-sm mb-8 max-w-sm mx-auto" style={{ color: C.inkMid, fontWeight: 300, lineHeight: 1.6 }}>{result.desc}</p>
+                      <div className="space-y-3 mb-8">
+                        <button className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium"
+                          style={{ backgroundColor: C.gold, color: C.cream, transition: "all 0.3s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.gold; }}
+                        >
+                          <ShoppingBag size={18} /> {result.cta1}
+                        </button>
+                        <button className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium"
+                          style={{ backgroundColor: C.inkDeep, color: C.cream, transition: "all 0.3s" }}
+                          onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+                          onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.inkDeep; }}
+                        >
+                          <CalendarCheck size={18} /> {result.cta2}
+                        </button>
+                      </div>
+                      <button onClick={resetQuiz} className="text-xs" style={{ color: C.inkMid, textDecoration: "underline" }}>Retake quiz</button>
+                    </>
+                  );
+                })()}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        *{margin:0;padding:0;box-sizing:border-box}
+        html{scroll-behavior:smooth}
+        ::selection{background:${C.goldLight};color:${C.ink}}
+        input::placeholder{color:${C.inkMid};opacity:0.6}
+        @keyframes scrollPulse{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(4px);opacity:1}}
+        @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+      `}</style>
+    </div>
+  );
+}
