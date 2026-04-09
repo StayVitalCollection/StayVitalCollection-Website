@@ -245,6 +245,77 @@ const resultData = {
   2: { title: "Your Specialist Protocol", desc: "Direct booking with vetted telehealth providers, HRT specialists, and white-labeled care services — for women ready to invest in full-spectrum support.", cta1: "Book a Specialist This Week", cta2: "View My Full Protocol", Icon: Crown },
 };
 
+/* ─── Vital Plan Generation ─── */
+const VITAL_PLAN_API_URL = "https://api.anthropic.com/v1/messages";
+const ANTHROPIC_API_KEY = ""; // Required: set your Anthropic API key
+
+function buildQuizProfile(answers) {
+  return quizSteps.map((step, i) => ({
+    category: step.label,
+    question: step.question,
+    answer: step.options[answers[i]]?.label || "Not answered",
+    detail: step.options[answers[i]]?.sub || null,
+  }));
+}
+
+async function generateVitalPlan(answers) {
+  const profile = buildQuizProfile(answers);
+  const budgetTier = answers[4] ?? 0;
+  const tierLabel = ["Under $50/month", "$50–$150/month", "$150+/month"][budgetTier];
+
+  const prompt = `You are a compassionate wellness expert at StayVital Collection, a company helping women — especially those in the "sandwich generation" caring for aging parents, children, and themselves — build personalized health and wellness protocols.
+
+Based on the following quiz responses, generate a personalized "Vital Plan."
+
+Quiz Responses:
+${profile.map(p => `- ${p.category}: ${p.answer}${p.detail ? ` (${p.detail})` : ""}`).join("\n")}
+
+Budget tier: ${tierLabel}
+
+Return ONLY a valid JSON object (no markdown fences, no extra text) with this exact structure:
+{
+  "summary": "2-3 sentence empathetic overview of where they are right now, referencing their specific answers",
+  "focusAreas": [
+    { "title": "Focus area name", "description": "Brief actionable description" }
+  ],
+  "weeklyProtocol": [
+    { "time": "Morning or Evening or Daily or Weekly", "action": "Specific action", "detail": "Brief explanation of why this helps" }
+  ],
+  "products": [
+    { "name": "Product type or name", "reason": "Why this fits their profile and budget" }
+  ],
+  "nextStep": "One clear, motivating action to take this week"
+}
+
+Guidelines:
+- Include 2-3 focus areas, 4-5 protocol items, and 2-3 product recommendations
+- Be warm and empathetic, never clinical or preachy
+- Reference their specific answers so it feels truly personalized
+- Keep recommendations realistic for their budget tier
+- Use plain language, no medical jargon
+- Do not use emojis`;
+
+  const res = await fetch(VITAL_PLAN_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": ANTHROPIC_API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true",
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 1024,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  const data = await res.json();
+  const text = data.content[0].text;
+  return JSON.parse(text);
+}
+
 /* ═══════════════════════════════════════════════════════════════
    MAIN
    ═══════════════════════════════════════════════════════════════ */
@@ -256,6 +327,9 @@ export default function StayVitalLanding() {
   const [emailInput, setEmailInput] = useState("");
   const [emailSubmitted, setEmailSubmitted] = useState(false);
   const [scrollY, setScrollY] = useState(0);
+  const [planLoading, setPlanLoading] = useState(false);
+  const [vitalPlan, setVitalPlan] = useState(null);
+  const [planError, setPlanError] = useState(false);
 
   useEffect(() => {
     const fn = () => setScrollY(window.scrollY);
@@ -268,6 +342,15 @@ export default function StayVitalLanding() {
     return () => { document.body.style.overflow = ""; };
   }, [quizOpen]);
 
+  useEffect(() => {
+    if (quizDone && !vitalPlan && !planLoading && !planError) {
+      setPlanLoading(true);
+      generateVitalPlan(answers)
+        .then((plan) => { setVitalPlan(plan); setPlanLoading(false); })
+        .catch(() => { setPlanError(true); setPlanLoading(false); });
+    }
+  }, [quizDone]);
+
   const selectAnswer = (idx) => {
     const next = [...answers];
     next[quizStep] = idx;
@@ -279,7 +362,7 @@ export default function StayVitalLanding() {
     }
   };
 
-  const resetQuiz = () => { setQuizStep(0); setAnswers([]); setQuizDone(false); setQuizOpen(false); };
+  const resetQuiz = () => { setQuizStep(0); setAnswers([]); setQuizDone(false); setQuizOpen(false); setVitalPlan(null); setPlanLoading(false); setPlanError(false); };
 
   const serif = "'Playfair Display', Didot, Georgia, serif";
   const sans = "'Jost', 'Helvetica Neue', sans-serif";
@@ -652,11 +735,30 @@ export default function StayVitalLanding() {
                 )}
               </div>
             ) : (
-              <div className="p-7 md:p-10 text-center">
-                {result && (() => {
+              <div className="p-7 md:p-10">
+                {/* Loading State */}
+                {planLoading && (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: C.goldLight, animation: "planPulse 1.8s ease-in-out infinite" }}>
+                      <Sparkles size={28} color={C.gold} />
+                    </div>
+                    <h3 className="text-xl md:text-2xl mb-3" style={{ fontFamily: serif, fontWeight: 500 }}>Generating Your Vital Plan</h3>
+                    <p className="text-sm max-w-xs mx-auto" style={{ color: C.inkMid, fontWeight: 300, lineHeight: 1.6 }}>
+                      Analyzing your responses and building a personalized wellness protocol...
+                    </p>
+                    <div className="mt-6 flex justify-center gap-1.5">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="w-2 h-2 rounded-full" style={{ backgroundColor: C.gold, animation: `planDot 1.2s ease-in-out ${i * 0.2}s infinite` }} />
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Error Fallback — shows static result */}
+                {planError && result && (() => {
                   const RIcon = result.Icon;
                   return (
-                    <>
+                    <div className="text-center">
                       <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: C.goldLight }}>
                         <RIcon size={28} color={C.gold} />
                       </div>
@@ -679,9 +781,117 @@ export default function StayVitalLanding() {
                         </button>
                       </div>
                       <button onClick={resetQuiz} className="text-xs" style={{ color: C.inkMid, textDecoration: "underline" }}>Retake quiz</button>
-                    </>
+                    </div>
                   );
                 })()}
+
+                {/* AI-Generated Vital Plan */}
+                {vitalPlan && (
+                  <div className="text-left" style={{ animation: "modalIn 0.5s cubic-bezier(.16,1,.3,1)" }}>
+                    {/* Header */}
+                    <div className="text-center mb-6">
+                      <div className="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: C.goldLight }}>
+                        <Sparkles size={24} color={C.gold} />
+                      </div>
+                      <h3 className="text-2xl md:text-3xl mb-1" style={{ fontFamily: serif, fontWeight: 500 }}>Your Vital Plan</h3>
+                      <p className="text-xs tracking-widest uppercase" style={{ color: C.gold, letterSpacing: 3 }}>Personalized Protocol</p>
+                    </div>
+
+                    {/* Summary */}
+                    <div className="rounded-xl p-4 mb-5" style={{ backgroundColor: C.warmWhite, border: `1px solid ${C.goldMid}` }}>
+                      <p className="text-sm" style={{ color: C.ink, lineHeight: 1.7, fontWeight: 300 }}>{vitalPlan.summary}</p>
+                    </div>
+
+                    {/* Focus Areas */}
+                    <div className="mb-5">
+                      <h4 className="text-xs tracking-widest uppercase mb-3 flex items-center gap-2" style={{ color: C.gold, letterSpacing: 3 }}>
+                        <Star size={12} color={C.gold} /> Priority Focus Areas
+                      </h4>
+                      <div className="space-y-2">
+                        {vitalPlan.focusAreas.map((area, i) => (
+                          <div key={i} className="flex gap-3 p-3 rounded-lg" style={{ backgroundColor: C.creamLight }}>
+                            <div className="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5" style={{ backgroundColor: C.goldLight }}>
+                              <span className="text-xs font-medium" style={{ color: C.gold }}>{i + 1}</span>
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium" style={{ color: C.ink }}>{area.title}</p>
+                              <p className="text-xs mt-0.5" style={{ color: C.inkMid, fontWeight: 300, lineHeight: 1.5 }}>{area.description}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Weekly Protocol */}
+                    <div className="mb-5">
+                      <h4 className="text-xs tracking-widest uppercase mb-3 flex items-center gap-2" style={{ color: C.gold, letterSpacing: 3 }}>
+                        <FileText size={12} color={C.gold} /> Your Weekly Protocol
+                      </h4>
+                      <div className="space-y-2">
+                        {vitalPlan.weeklyProtocol.map((item, i) => (
+                          <div key={i} className="flex gap-3 p-3 rounded-lg" style={{ border: `1px solid ${C.inkLight}` }}>
+                            <div className="flex-shrink-0">
+                              <span className="inline-block px-2 py-0.5 rounded text-[10px] tracking-wider uppercase font-medium" style={{ backgroundColor: C.goldLight, color: C.gold }}>
+                                {item.time}
+                              </span>
+                            </div>
+                            <div className="flex-1">
+                              <p className="text-sm font-medium" style={{ color: C.ink }}>{item.action}</p>
+                              <p className="text-xs mt-0.5" style={{ color: C.inkMid, fontWeight: 300, lineHeight: 1.5 }}>{item.detail}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Products */}
+                    <div className="mb-5">
+                      <h4 className="text-xs tracking-widest uppercase mb-3 flex items-center gap-2" style={{ color: C.gold, letterSpacing: 3 }}>
+                        <ShoppingBag size={12} color={C.gold} /> Recommended For You
+                      </h4>
+                      <div className="space-y-2">
+                        {vitalPlan.products.map((prod, i) => (
+                          <div key={i} className="flex items-start gap-3 p-3 rounded-lg" style={{ backgroundColor: C.creamLight }}>
+                            <Shield size={14} color={C.sage} className="flex-shrink-0 mt-0.5" />
+                            <div>
+                              <p className="text-sm font-medium" style={{ color: C.ink }}>{prod.name}</p>
+                              <p className="text-xs mt-0.5" style={{ color: C.inkMid, fontWeight: 300, lineHeight: 1.5 }}>{prod.reason}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Next Step */}
+                    <div className="rounded-xl p-4 mb-6" style={{ backgroundColor: C.inkDeep }}>
+                      <h4 className="text-xs tracking-widest uppercase mb-2 flex items-center gap-2" style={{ color: C.gold, letterSpacing: 3 }}>
+                        <ArrowRight size={12} color={C.gold} /> Your Next Step
+                      </h4>
+                      <p className="text-sm" style={{ color: C.creamLight, fontWeight: 300, lineHeight: 1.6 }}>{vitalPlan.nextStep}</p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="space-y-3 mb-6">
+                      <button className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium"
+                        style={{ backgroundColor: C.gold, color: C.cream, transition: "all 0.3s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.gold; }}
+                      >
+                        <ShoppingBag size={18} /> Start My Protocol
+                      </button>
+                      <button className="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium"
+                        style={{ backgroundColor: C.inkDeep, color: C.cream, transition: "all 0.3s" }}
+                        onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = C.teal; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = C.inkDeep; }}
+                      >
+                        <CalendarCheck size={18} /> Book a Specialist
+                      </button>
+                    </div>
+                    <div className="text-center">
+                      <button onClick={resetQuiz} className="text-xs" style={{ color: C.inkMid, textDecoration: "underline" }}>Retake quiz</button>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -695,6 +905,8 @@ export default function StayVitalLanding() {
         input::placeholder{color:${C.inkMid};opacity:0.6}
         @keyframes scrollPulse{0%,100%{transform:translateY(0);opacity:0.4}50%{transform:translateY(4px);opacity:1}}
         @keyframes modalIn{from{opacity:0;transform:scale(0.95) translateY(16px)}to{opacity:1;transform:scale(1) translateY(0)}}
+        @keyframes planPulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:0.7}}
+        @keyframes planDot{0%,100%{opacity:0.3;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
       `}</style>
     </div>
   );
