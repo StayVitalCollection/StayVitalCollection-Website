@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Your Vital Plan — StayVital Collection</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Jost:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ink: "#1A1A1A",
+            inkDeep: "#0D1B2A",
+            gold: "#C89B3C",
+            cream: "#F5F2EB",
+            creamLight: "#FDF8F0",
+            sage: "#7C8C6E",
+            teal: "#1A5C5E",
+            warmWhite: "#FFFDF9",
+          },
+          fontFamily: {
+            serif: ["'Playfair Display'", "Didot", "Georgia", "serif"],
+            sans: ["'Jost'", "'Helvetica Neue'", "sans-serif"],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Jost', 'Helvetica Neue', sans-serif; background-color: #F5F2EB; color: #1A1A1A; }
+    ::selection { background: rgba(200,155,60,0.12); color: #1A1A1A; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.06); opacity: 0.7; } }
+    @keyframes dot { 0%,100% { opacity: 0.3; transform: scale(0.8); } 50% { opacity: 1; transform: scale(1.2); } }
+    .fade-in { animation: fadeIn 0.5s cubic-bezier(.16,1,.3,1) both; }
+    .delay-1 { animation-delay: 0.08s; }
+    .delay-2 { animation-delay: 0.16s; }
+    .delay-3 { animation-delay: 0.24s; }
+    .delay-4 { animation-delay: 0.32s; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- NAV -->
+  <nav class="flex items-center justify-between px-5 md:px-10 py-5">
+    <div class="flex items-center gap-2">
+      <svg width="28" height="28" viewBox="0 0 120 120"><g transform="translate(40,35)"><path d="M20 0 L40 40 L0 40 Z" fill="#C89B3C"/><path d="M20 10 L28 28 L12 28 Z" fill="#F5F2EB"/><circle cx="20" cy="-6" r="3" fill="#C89B3C"/></g></svg>
+      <div class="flex flex-col leading-none">
+        <span class="font-serif font-semibold text-sm tracking-widest text-ink">STAYVITAL</span>
+        <span class="font-serif text-[7px] tracking-[4px] text-gold mt-0.5">COLLECTION</span>
+      </div>
+    </div>
+    <a href="index.html" class="text-xs tracking-widest uppercase text-gold/60 hover:text-gold transition-colors" style="letter-spacing:2px">Home</a>
+  </nav>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 flex items-center justify-center px-4 py-8 md:py-12">
+    <div id="app" class="w-full max-w-lg"></div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="text-center py-6 px-4">
+    <p class="text-xs text-ink/25 italic">Every family. Every generation. One Vital path.</p>
+    <p class="text-xs text-ink/20 mt-1">&copy; 2026 StayVital Collection LLC</p>
+  </footer>
+
+  <script>
+    // ─── CONFIG ───
+    const API_URL = "https://api.anthropic.com/v1/messages";
+    const API_KEY = ""; // Set your Anthropic API key here
+
+    // ─── VETTED PRODUCT CATALOG ───
+    const PRODUCTS = {
+      supplements: {
+        essentials: [
+          { name: "Magnesium Glycinate (400mg)", price: "$14", link: "https://amzn.to/magnesium-glycinate", why: "The #1 mineral for sleep quality and stress recovery" },
+          { name: "Vitamin D3 + K2 Drops", price: "$12", link: "https://amzn.to/vitamin-d3-k2", why: "Foundational for mood, bones, and immune function" },
+          { name: "Omega-3 Fish Oil (EPA/DHA)", price: "$18", link: "https://amzn.to/omega3-epa-dha", why: "Reduces inflammation and supports brain clarity" },
+        ],
+        premium: [
+          { name: "Thorne Basic Nutrients 2/Day", price: "$32", link: "https://amzn.to/thorne-basic-nutrients", why: "Comprehensive, bioavailable multivitamin trusted by practitioners" },
+          { name: "Nordic Naturals ProOmega 2000", price: "$45", link: "https://amzn.to/nordic-proomega", why: "Clinical-strength omega-3s for inflammation and cognitive support" },
+          { name: "Pure Encapsulations Magnesium Glycinate", price: "$28", link: "https://amzn.to/pure-mag-glycinate", why: "Practitioner-grade magnesium for deep sleep and muscle recovery" },
+        ],
+        specialist: [
+          { name: "Designs for Health Complete Multi", price: "$55", link: "https://amzn.to/dfh-complete-multi", why: "Clinical-grade full-spectrum multi used in functional medicine" },
+          { name: "Metagenics SPM Active", price: "$65", link: "https://amzn.to/metagenics-spm", why: "Specialized pro-resolving mediators for chronic inflammation" },
+        ],
+      },
+      stress: {
+        essentials: [
+          { name: "Ashwagandha KSM-66 (600mg)", price: "$16", link: "https://amzn.to/ashwagandha-ksm66", why: "Clinically studied adaptogen for cortisol and anxiety reduction" },
+          { name: "L-Theanine (200mg)", price: "$12", link: "https://amzn.to/l-theanine-200", why: "Promotes calm focus without drowsiness" },
+        ],
+        premium: [
+          { name: "Moon Juice SuperYou", price: "$49", link: "https://amzn.to/moonjuice-superyou", why: "4-adaptogen blend for daily stress resilience" },
+          { name: "Calm App Annual Subscription", price: "$70/yr", link: "https://www.calm.com", why: "Guided meditations, sleep stories, and breathing exercises" },
+        ],
+        specialist: [
+          { name: "BetterHelp Therapy (Monthly)", price: "$65/wk", link: "https://www.betterhelp.com", why: "Licensed therapist matched to your specific situation" },
+        ],
+      },
+      sleep: {
+        essentials: [
+          { name: "Glycine Powder (3g)", price: "$12", link: "https://amzn.to/glycine-powder", why: "Lowers core body temperature for deeper sleep onset" },
+          { name: "Blue Light Blocking Glasses", price: "$15", link: "https://amzn.to/blue-light-glasses", why: "Protects melatonin production in evening hours" },
+          { name: "Manta Sleep Mask", price: "$25", link: "https://amzn.to/manta-sleep-mask", why: "Total blackout for uninterrupted deep sleep cycles" },
+        ],
+        premium: [
+          { name: "Oura Ring (Gen 3)", price: "$299", link: "https://ouraring.com", why: "Tracks sleep stages, HRV, and readiness to optimize your routine" },
+          { name: "Beam Dream Powder", price: "$36", link: "https://amzn.to/beam-dream", why: "Nano-CBD + reishi + magnesium sleep blend" },
+        ],
+        specialist: [
+          { name: "Virtual Sleep Specialist Consult", price: "$150+", link: "https://www.sleepfoundation.org/find-sleep-specialist", why: "Board-certified sleep medicine evaluation" },
+        ],
+      },
+      hormonal: {
+        essentials: [
+          { name: "Evening Primrose Oil (1300mg)", price: "$10", link: "https://amzn.to/evening-primrose", why: "GLA fatty acid support for hormonal balance and skin" },
+          { name: "Vitex (Chasteberry)", price: "$12", link: "https://amzn.to/vitex-chasteberry", why: "Traditional herb for cycle regulation and PMS relief" },
+        ],
+        premium: [
+          { name: "DIM + Calcium D-Glucarate", price: "$32", link: "https://amzn.to/dim-calcium-dglucarate", why: "Supports healthy estrogen metabolism during perimenopause" },
+          { name: "DUTCH Complete Hormone Test", price: "$399", link: "https://dutchtest.com", why: "The gold standard for comprehensive hormone mapping" },
+        ],
+        specialist: [
+          { name: "Midi Health (Telehealth HRT)", price: "Insurance/self-pay", link: "https://www.joinmidi.com", why: "Menopause-specialized clinicians for HRT evaluation and management" },
+          { name: "Alloy Health HRT Consult", price: "$249 initial", link: "https://www.myalloy.com", why: "Telehealth hormone therapy with ongoing provider support" },
+        ],
+      },
+      caregiver: {
+        essentials: [
+          { name: "Caregiver Action Network (Free)", price: "Free", link: "https://www.caregiveraction.org", why: "Peer support, education, and advocacy resources" },
+          { name: "Lotsa Helping Hands (Free)", price: "Free", link: "https://lotsahelpinghands.com", why: "Coordinate help from family and friends with shared calendar" },
+        ],
+        premium: [
+          { name: "Care.com Membership", price: "$25/mo", link: "https://www.care.com", why: "Vetted caregivers for respite care, eldercare, and childcare" },
+          { name: "Talkspace Therapy", price: "$69/wk", link: "https://www.talkspace.com", why: "Flexible online therapy for caregiver burnout and overwhelm" },
+        ],
+        specialist: [
+          { name: "Aging Life Care Manager", price: "$150+/hr", link: "https://www.aginglifecare.org", why: "Professional geriatric care coordination and advocacy" },
+        ],
+      },
+    };
+
+    // ─── QUIZ DATA ───
+    const QUIZ = [
+      {
+        label: "The Immediate Fire",
+        question: "What would give you the most relief right now?",
+        options: [
+          { text: "Mental Bandwidth", sub: "Logistics & decision fatigue", icon: "brain" },
+          { text: "Physical Energy", sub: "Sleep & daily stamina", icon: "battery" },
+          { text: "Emotional Clarity", sub: "Overwhelm & emotional flooding", icon: "cloud" },
+          { text: "A Complete Reset", sub: "All of the above", icon: "refresh" },
+        ],
+      },
+      {
+        label: "The Sandwich Context",
+        question: "Who are you managing life for, besides yourself?",
+        options: [
+          { text: "An aging parent or relative", sub: null, icon: "heart" },
+          { text: "A partner with complex needs", sub: null, icon: "users" },
+          { text: "Children or teenagers", sub: null, icon: "baby" },
+          { text: "Multiple generations", sub: "The full Sandwich", icon: "layers" },
+          { text: "Just myself right now", sub: null, icon: "user" },
+        ],
+      },
+      {
+        label: "The Biological Reality",
+        question: "Where are you on the hormonal timeline?",
+        options: [
+          { text: "40+ and feeling the shifts", sub: "Sleep changes, brain fog, perimenopause", icon: "moon" },
+          { text: "Post-menopause", sub: null, icon: "sun" },
+          { text: "On HRT, not fully optimized", sub: null, icon: "thermometer" },
+          { text: "Under 40 / Not sure", sub: null, icon: "help" },
+        ],
+      },
+      {
+        label: "The Frustration Check",
+        question: "What's the most frustrating advice you hear?",
+        options: [
+          { text: '"Just take a bath and do yoga."', sub: "Needs real solutions, not platitudes", icon: "bath" },
+          { text: '"Take a generic supplement."', sub: "Needs targeted, quality products", icon: "leaf" },
+          { text: '"You just need to sleep."', sub: "Needs clinical support", icon: "bed" },
+          { text: '"Just hire some help."', sub: "Needs vetted, affordable resources", icon: "hand" },
+        ],
+      },
+      {
+        label: "The Action Tier",
+        question: "What's your realistic monthly wellness budget?",
+        options: [
+          { text: "Under $50", sub: "High-impact stacks & DIY tools", icon: "dollar" },
+          { text: "$50 – $150", sub: "Premium wellness & memberships", icon: "gem" },
+          { text: "$150+", sub: "Specialist booking & telehealth", icon: "crown" },
+        ],
+      },
+    ];
+
+    const TIER_NAMES = ["Essentials", "Premium", "Specialist"];
+    const TIER_KEYS = ["essentials", "premium", "specialist"];
+    const TIER_BUDGETS = ["Under $50/month", "$50–$150/month", "$150+/month"];
+
+    const LOADING_MSGS = [
+      "Analyzing your responses...",
+      "Mapping your wellness priorities...",
+      "Selecting vetted products for your budget...",
+      "Building your personalized protocol...",
+      "Finalizing your Vital Plan...",
+    ];
+
+    // ─── ICONS ───
+    const ICONS = {
+      brain: `<path d="M12 2a4 4 0 0 1 4 4v1a3 3 0 0 1 2 2.83V11a4 4 0 0 1-1.5 3.12A3.5 3.5 0 0 1 13 18h-2a3.5 3.5 0 0 1-3.5-3.88A4 4 0 0 1 6 11V9.83A3 3 0 0 1 8 7V6a4 4 0 0 1 4-4z"/><path d="M12 2v20"/>`,
+      battery: `<rect x="1" y="6" width="18" height="12" rx="2"/><line x1="23" y1="13" x2="23" y2="11"/>`,
+      cloud: `<path d="M20 17.58A5 5 0 0 0 18 8h-1.26A8 8 0 1 0 4 16.25"/><line x1="8" y1="16" x2="8" y2="20"/><line x1="12" y1="18" x2="12" y2="22"/>`,
+      refresh: `<polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>`,
+      heart: `<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/>`,
+      users: `<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>`,
+      baby: `<circle cx="12" cy="12" r="8"/><circle cx="9.5" cy="10" r="0.75" fill="currentColor"/><circle cx="14.5" cy="10" r="0.75" fill="currentColor"/><path d="M9 14c.8 1 2 1.5 3 1.5s2.2-.5 3-1.5"/>`,
+      layers: `<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>`,
+      user: `<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>`,
+      moon: `<path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>`,
+      sun: `<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>`,
+      thermometer: `<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"/>`,
+      help: `<circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/>`,
+      bath: `<path d="M4 12h16a1 1 0 0 1 1 1v3a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4v-3a1 1 0 0 1 1-1z"/><path d="M6 12V5a2 2 0 0 1 2-2h1"/>`,
+      leaf: `<path d="M11 20A7 7 0 0 1 9.8 6.9C15.5 4.9 17 3.5 19 2c1 2 2 4.5 2 8 0 5.5-4.78 10-10 10z"/><path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"/>`,
+      bed: `<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4"/><line x1="2" y1="17" x2="22" y2="17"/>`,
+      hand: `<path d="M11 14h2a2 2 0 1 0 0-4h-3c-.6 0-1.1.2-1.4.6L3 16"/><path d="M7 20l1.6-1.4c.3-.4.8-.6 1.4-.6h4c1.1 0 2.1-.4 2.8-1.2l4.6-4.4a2 2 0 0 0-2.75-2.91l-3.15 2.3"/>`,
+      dollar: `<line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>`,
+      gem: `<polygon points="6 3 18 3 22 9 12 22 2 9"/><path d="M2 9h20"/><line x1="12" y1="3" x2="12" y2="9"/>`,
+      crown: `<path d="M2 18l3-12 5 5 2-7 2 7 5-5 3 12z"/><line x1="2" y1="18" x2="22" y2="18"/>`,
+      check: `<polyline points="20 6 9 17 4 12"/>`,
+      sparkles: `<path d="M12 3l1.5 4.5L18 9l-4.5 1.5L12 15l-1.5-4.5L6 9l4.5-1.5z"/><path d="M19 14l.75 2.25L22 17l-2.25.75L19 20l-.75-2.25L16 17l2.25-.75z"/>`,
+      star: `<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>`,
+      arrow: `<line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/>`,
+      link: `<path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>`,
+      copy: `<rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>`,
+      back: `<polyline points="15 18 9 12 15 6"/>`,
+      bag: `<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/>`,
+      shield: `<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>`,
+      file: `<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>`,
+      download: `<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/>`,
+      calendar: `<rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>`,
+    };
+
+    function icon(name, size = 18, color = "currentColor") {
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICONS[name] || ""}</svg>`;
+    }
+
+    // ─── PLAN GENERATION ───
+    function getProductsForProfile(answers) {
+      const tier = TIER_KEYS[answers[4] ?? 0];
+      const needIdx = answers[0] ?? 0;
+      const careIdx = answers[1] ?? 0;
+      const hormonalIdx = answers[2] ?? 0;
+
+      let cats = ["supplements"];
+      if (needIdx === 0 || needIdx === 3) cats.push("stress");
+      if (needIdx === 1 || needIdx === 3) cats.push("sleep");
+      if (needIdx === 2 || needIdx === 3) cats.push("stress");
+      if (hormonalIdx <= 2) cats.push("hormonal");
+      if (careIdx <= 3) cats.push("caregiver");
+
+      cats = [...new Set(cats)];
+      const selected = [];
+      for (const cat of cats) {
+        const items = PRODUCTS[cat]?.[tier] || [];
+        selected.push(...items.map(p => ({ ...p, category: cat })));
+      }
+      return selected;
+    }
+
+    async function generatePlan(answers) {
+      if (!API_KEY) throw new Error("no-key");
+
+      const profile = QUIZ.map((step, i) => ({
+        category: step.label,
+        answer: step.options[answers[i]]?.text || "Not answered",
+        detail: step.options[answers[i]]?.sub || null,
+      }));
+
+      const tierIdx = answers[4] ?? 0;
+      const tierName = TIER_NAMES[tierIdx];
+      const tierBudget = TIER_BUDGETS[tierIdx];
+      const products = getProductsForProfile(answers);
+
+      const productList = products.map(p =>
+        `- [${p.category}] ${p.name} (${p.price}) — ${p.why}`
+      ).join("\n");
+
+      const prompt = `You are a compassionate wellness expert at StayVital Collection, helping women in the "sandwich generation" build personalized wellness protocols.
+
+A woman just completed our quiz. Generate her personalized Vital Plan.
+
+Her Responses:
+${profile.map(p => `- ${p.category}: ${p.answer}${p.detail ? ` (${p.detail})` : ""}`).join("\n")}
+
+Protocol Tier: ${tierName} (${tierBudget})
+
+Available Vetted Products (select the 4-6 most relevant for her situation):
+${productList}
+
+Return ONLY valid JSON (no markdown fences) with this structure:
+{
+  "planTitle": "Short personalized title (e.g. 'The Caregiver Reset Protocol')",
+  "summary": "2-3 warm sentences reflecting where she is, referencing her specific answers",
+  "focusAreas": [
+    { "title": "3-5 word title", "description": "1-2 actionable sentences" }
+  ],
+  "weeklyProtocol": [
+    { "time": "Morning|Midday|Evening|Daily|Weekly", "action": "Specific action", "detail": "Why this matters for her" }
+  ],
+  "recommendedProducts": [
+    { "name": "Exact product name from the list above", "category": "category from list", "personalNote": "1 sentence on why this specifically fits her" }
+  ],
+  "nextStep": "One specific action she can do today"
+}
+
+Rules:
+- 2-3 focus areas, 4-5 protocol items, 4-6 products from the provided list
+- ONLY recommend products from the provided list — use exact names
+- Be warm and real, like a knowledgeable friend
+- Reference her specific answers throughout
+- No emojis, no medical jargon`;
+
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": API_KEY,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true",
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-6",
+          max_tokens: 1200,
+          messages: [{ role: "user", content: prompt }],
+        }),
+      });
+
+      if (!res.ok) throw new Error(`API ${res.status}`);
+      const data = await res.json();
+      return JSON.parse(data.content[0].text);
+    }
+
+    // ─── APP STATE ───
+    let state = {
+      step: 0,
+      answers: [],
+      done: false,
+      loading: false,
+      loadingMsg: 0,
+      plan: null,
+      error: null,
+      copied: false,
+    };
+
+    let loadingTimer = null;
+
+    function setState(updates) {
+      Object.assign(state, updates);
+      render();
+    }
+
+    function selectAnswer(idx) {
+      const answers = [...state.answers];
+      answers[state.step] = idx;
+      setState({ answers });
+
+      setTimeout(() => {
+        if (state.step < QUIZ.length - 1) {
+          setState({ step: state.step + 1 });
+        } else {
+          setState({ done: true, loading: true, loadingMsg: 0 });
+          loadingTimer = setInterval(() => {
+            setState({ loadingMsg: (state.loadingMsg + 1) % LOADING_MSGS.length });
+          }, 1800);
+          generatePlan(answers)
+            .then(plan => {
+              clearInterval(loadingTimer);
+              setState({ plan, loading: false });
+              document.getElementById("app").scrollIntoView({ behavior: "smooth" });
+            })
+            .catch(err => {
+              clearInterval(loadingTimer);
+              setState({ error: err.message, loading: false });
+            });
+        }
+      }, 350);
+    }
+
+    function goBack() {
+      if (state.step > 0) setState({ step: state.step - 1 });
+    }
+
+    function resetQuiz() {
+      clearInterval(loadingTimer);
+      state = { step: 0, answers: [], done: false, loading: false, loadingMsg: 0, plan: null, error: null, copied: false };
+      render();
+    }
+
+    function copyPlan() {
+      const p = state.plan;
+      if (!p) return;
+      const tierIdx = state.answers[4] ?? 0;
+      const products = getProductsForProfile(state.answers);
+      const text = [
+        `${p.planTitle || "Your Vital Plan"} — ${TIER_NAMES[tierIdx]} Protocol`,
+        `StayVital Collection`,
+        "",
+        p.summary,
+        "",
+        "PRIORITY FOCUS AREAS",
+        ...(p.focusAreas || []).map((a, i) => `${i + 1}. ${a.title}: ${a.description}`),
+        "",
+        "YOUR WEEKLY PROTOCOL",
+        ...(p.weeklyProtocol || []).map(r => `[${r.time}] ${r.action} — ${r.detail}`),
+        "",
+        "RECOMMENDED PRODUCTS",
+        ...(p.recommendedProducts || []).map(r => {
+          const match = products.find(x => x.name === r.name);
+          return `- ${r.name}${match ? ` (${match.price}) — ${match.link}` : ""}\n  ${r.personalNote}`;
+        }),
+        "",
+        "YOUR NEXT STEP",
+        p.nextStep,
+      ].join("\n");
+      navigator.clipboard.writeText(text).then(() => {
+        setState({ copied: true });
+        setTimeout(() => setState({ copied: false }), 2500);
+      });
+    }
+
+    // ─── RENDER ───
+    function render() {
+      const el = document.getElementById("app");
+      if (!el) return;
+
+      // QUIZ QUESTIONS
+      if (!state.done) {
+        const q = QUIZ[state.step];
+        const progress = ((state.step) / QUIZ.length) * 100;
+
+        el.innerHTML = `
+          <div class="bg-cream rounded-2xl shadow-xl overflow-hidden fade-in" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
+            <!-- Progress -->
+            <div class="h-1 bg-ink/5">
+              <div class="h-full bg-gold transition-all duration-500 rounded-r-full" style="width:${progress}%"></div>
+            </div>
+
+            <div class="p-6 md:p-8">
+              <div class="flex items-center justify-between mb-5">
+                <span class="text-xs tracking-widest uppercase text-gold font-medium" style="letter-spacing:3px">${q.label}</span>
+                <span class="text-xs text-ink/40">${state.step + 1} of ${QUIZ.length}</span>
+              </div>
+
+              <h2 class="font-serif text-lg md:text-xl font-medium mb-6 leading-snug">${q.question}</h2>
+
+              <div class="space-y-2.5">
+                ${q.options.map((opt, i) => {
+                  const sel = state.answers[state.step] === i;
+                  return `
+                    <button onclick="selectAnswer(${i})"
+                      class="w-full flex items-center gap-3 p-3.5 rounded-xl text-left transition-all duration-200 border ${sel ? "border-gold bg-gold/10" : "border-ink/5 hover:border-gold/25 hover:bg-gold/[0.03]"} fade-in delay-${i}"
+                    >
+                      <div class="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 ${sel ? "bg-gold/15" : "bg-ink/5"}">
+                        ${icon(opt.icon, 16, sel ? "#C89B3C" : "rgba(26,26,26,0.4)")}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <span class="text-sm font-medium block text-ink">${opt.text}</span>
+                        ${opt.sub ? `<span class="text-xs block mt-0.5 text-ink/40 font-light">${opt.sub}</span>` : ""}
+                      </div>
+                      ${sel ? `<div class="flex-shrink-0">${icon("check", 16, "#C89B3C")}</div>` : ""}
+                    </button>
+                  `;
+                }).join("")}
+              </div>
+
+              ${state.step > 0 ? `
+                <button onclick="goBack()" class="flex items-center gap-1 mt-5 text-xs text-ink/40 hover:text-ink/60 transition-colors">
+                  ${icon("back", 14)} Back
+                </button>
+              ` : ""}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // LOADING
+      if (state.loading) {
+        el.innerHTML = `
+          <div class="bg-cream rounded-2xl shadow-xl p-8 md:p-10 text-center fade-in" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
+            <div class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 bg-gold/10" style="animation: pulse 1.8s ease-in-out infinite;">
+              ${icon("sparkles", 28, "#C89B3C")}
+            </div>
+            <h3 class="font-serif text-xl md:text-2xl font-medium mb-3">Generating Your Vital Plan</h3>
+            <p class="text-sm text-ink/50 font-light max-w-xs mx-auto" style="min-height:40px;transition:opacity 0.4s">
+              ${LOADING_MSGS[state.loadingMsg]}
+            </p>
+            <div class="mt-6 flex justify-center gap-1.5">
+              ${[0,1,2].map(i => `<div class="w-2 h-2 rounded-full bg-gold" style="animation:dot 1.2s ease-in-out ${i*0.2}s infinite"></div>`).join("")}
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      // ERROR
+      if (state.error) {
+        const tierIdx = state.answers[4] ?? 0;
+        const isNoKey = state.error === "no-key";
+        el.innerHTML = `
+          <div class="bg-cream rounded-2xl shadow-xl p-8 md:p-10 text-center fade-in" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
+            <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-5 ${isNoKey ? "bg-sage/10" : "bg-gold/10"}">
+              ${icon(isNoKey ? "shield" : "sparkles", 24, isNoKey ? "#7C8C6E" : "#C89B3C")}
+            </div>
+            <h3 class="font-serif text-xl font-medium mb-2">${isNoKey ? "API Key Required" : "Something went wrong"}</h3>
+            <p class="text-sm text-ink/50 font-light mb-6 max-w-xs mx-auto">
+              ${isNoKey
+                ? "Set your Anthropic API key in quiz.html to generate personalized AI plans."
+                : "We couldn't reach the AI right now. Please try again."
+              }
+            </p>
+            ${isNoKey ? `
+              <div class="rounded-lg p-3 mb-6 bg-creamLight border border-ink/5 text-left">
+                <p class="text-xs font-medium text-ink mb-1">In quiz.html, set:</p>
+                <code class="text-xs text-teal">const API_KEY = "sk-ant-..."</code>
+              </div>
+            ` : ""}
+            <button onclick="resetQuiz()" class="inline-flex items-center gap-2 px-6 py-3 rounded-full text-sm font-medium bg-gold text-cream hover:bg-teal transition-colors">
+              ${icon("refresh", 16, "#F5F2EB")} Try Again
+            </button>
+          </div>
+        `;
+        return;
+      }
+
+      // PLAN RESULTS
+      if (state.plan) {
+        const p = state.plan;
+        const tierIdx = state.answers[4] ?? 0;
+        const products = getProductsForProfile(state.answers);
+
+        el.innerHTML = `
+          <div class="bg-cream rounded-2xl shadow-xl overflow-hidden fade-in" style="box-shadow: 0 20px 60px rgba(0,0,0,0.08);">
+            <div class="p-6 md:p-8">
+
+              <!-- Header -->
+              <div class="text-center mb-6">
+                <div class="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3 bg-gold/10">
+                  ${icon("sparkles", 22, "#C89B3C")}
+                </div>
+                <span class="inline-block px-3 py-1 rounded-full bg-gold/10 text-xs tracking-widest uppercase font-medium text-gold mb-2" style="letter-spacing:2px">
+                  ${TIER_NAMES[tierIdx]} Protocol
+                </span>
+                <h2 class="font-serif text-xl md:text-2xl font-medium leading-tight">${p.planTitle || "Your Vital Plan"}</h2>
+              </div>
+
+              <!-- Summary -->
+              <div class="rounded-xl p-4 mb-5 bg-warmWhite border border-gold/20">
+                <p class="text-sm text-ink font-light leading-relaxed">${p.summary}</p>
+              </div>
+
+              <!-- Focus Areas -->
+              <div class="mb-5">
+                <h4 class="text-xs tracking-widest uppercase text-gold font-medium flex items-center gap-2 mb-3" style="letter-spacing:3px">
+                  ${icon("star", 12, "#C89B3C")} Priority Focus Areas
+                </h4>
+                <div class="space-y-2">
+                  ${(p.focusAreas || []).map((a, i) => `
+                    <div class="flex gap-3 p-3 rounded-lg bg-creamLight">
+                      <div class="w-6 h-6 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 bg-gold/10">
+                        <span class="text-xs font-medium text-gold">${i + 1}</span>
+                      </div>
+                      <div>
+                        <p class="text-sm font-medium text-ink">${a.title}</p>
+                        <p class="text-xs mt-0.5 text-ink/50 font-light leading-relaxed">${a.description}</p>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+
+              <!-- Weekly Protocol -->
+              <div class="mb-5">
+                <h4 class="text-xs tracking-widest uppercase text-gold font-medium flex items-center gap-2 mb-3" style="letter-spacing:3px">
+                  ${icon("file", 12, "#C89B3C")} Your Weekly Protocol
+                </h4>
+                <div class="space-y-2">
+                  ${(p.weeklyProtocol || []).map(r => `
+                    <div class="flex gap-3 p-3 rounded-lg border border-ink/5">
+                      <span class="inline-block px-2 py-0.5 rounded text-[10px] tracking-wider uppercase font-medium bg-gold/10 text-gold self-start mt-0.5 whitespace-nowrap">${r.time}</span>
+                      <div class="flex-1">
+                        <p class="text-sm font-medium text-ink">${r.action}</p>
+                        <p class="text-xs mt-0.5 text-ink/50 font-light leading-relaxed">${r.detail}</p>
+                      </div>
+                    </div>
+                  `).join("")}
+                </div>
+              </div>
+
+              <!-- Recommended Products with Links -->
+              <div class="mb-5">
+                <h4 class="text-xs tracking-widest uppercase text-gold font-medium flex items-center gap-2 mb-3" style="letter-spacing:3px">
+                  ${icon("bag", 12, "#C89B3C")} Vetted Products For You
+                </h4>
+                <div class="space-y-2">
+                  ${(p.recommendedProducts || []).map(r => {
+                    const match = products.find(x => x.name === r.name);
+                    return `
+                      <div class="p-3 rounded-lg bg-creamLight border border-ink/5">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <p class="text-sm font-medium text-ink">${r.name}</p>
+                          ${match ? `<span class="text-xs font-medium text-gold whitespace-nowrap">${match.price}</span>` : ""}
+                        </div>
+                        <p class="text-xs text-ink/50 font-light leading-relaxed mb-2">${r.personalNote}</p>
+                        ${match ? `
+                          <a href="${match.link}" target="_blank" rel="noopener noreferrer"
+                            class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-teal text-cream hover:bg-gold transition-colors no-underline">
+                            ${icon("link", 12, "#F5F2EB")} View Product
+                          </a>
+                        ` : ""}
+                      </div>
+                    `;
+                  }).join("")}
+                </div>
+              </div>
+
+              <!-- Next Step -->
+              <div class="rounded-xl p-4 mb-6 bg-inkDeep">
+                <h4 class="text-xs tracking-widest uppercase text-gold font-medium flex items-center gap-2 mb-2" style="letter-spacing:3px">
+                  ${icon("arrow", 12, "#C89B3C")} Your Next Step
+                </h4>
+                <p class="text-sm text-creamLight font-light leading-relaxed">${p.nextStep}</p>
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="space-y-2.5 mb-4">
+                <button onclick="window.location.href='index.html'" class="w-full flex items-center justify-center gap-3 px-6 py-4 rounded-xl text-sm font-medium bg-gold text-cream hover:bg-teal transition-colors">
+                  ${icon("bag", 18, "#F5F2EB")} Start My Protocol
+                </button>
+              </div>
+
+              <!-- Copy & Email -->
+              <div class="flex gap-2 mb-4">
+                <button onclick="copyPlan()"
+                  class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-medium bg-creamLight border border-ink/5 hover:border-gold/25 transition-colors ${state.copied ? "text-sage" : "text-ink/50"}">
+                  ${state.copied ? icon("check", 14, "#7C8C6E") : icon("copy", 14)} ${state.copied ? "Copied!" : "Copy Plan"}
+                </button>
+                <a href="mailto:?subject=My StayVital Vital Plan&body=${encodeURIComponent((() => {
+                  const text = [
+                    p.planTitle || "Your Vital Plan",
+                    p.summary, "",
+                    "PROTOCOL:",
+                    ...(p.weeklyProtocol||[]).map(r=>`[${r.time}] ${r.action}`), "",
+                    "PRODUCTS:",
+                    ...(p.recommendedProducts||[]).map(r => {
+                      const m = products.find(x=>x.name===r.name);
+                      return `- ${r.name}${m?" — "+m.link:""}`;
+                    }),
+                  ].join("\n");
+                  return text;
+                })())}"
+                  class="flex-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-xs font-medium bg-creamLight border border-ink/5 hover:border-gold/25 transition-colors text-ink/50 no-underline">
+                  ${icon("download", 14)} Email Plan
+                </a>
+              </div>
+
+              <div class="text-center">
+                <button onclick="resetQuiz()" class="text-xs text-ink/40 underline hover:text-ink/60 transition-colors">Retake quiz</button>
+              </div>
+            </div>
+          </div>
+        `;
+        return;
+      }
+    }
+
+    // ─── INIT ───
+    document.addEventListener("DOMContentLoaded", render);
+  </script>
+</body>
+</html>
